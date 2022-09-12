@@ -9,6 +9,7 @@ function aspectRatio(){
 }
 
 let objects = new Array()
+let arrows = new Array()
 
 function addObject(geometry, name){
   let mat = new THREE.MeshBasicMaterial({
@@ -104,38 +105,68 @@ function onDocumentMouseDown(event) {
     mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1
     mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1
     raycaster.setFromCamera(mouse, camera)
+    let notArrow = true
     let closest
     let distance = 0
-    objects.forEach((obj, i) => {
-      obj.remove(xArrow)
-      obj.remove(yArrow)
-      obj.remove(zArrow)
-      let intersects = raycaster.intersectObject(obj)
 
+    arrows.forEach((obj, i) => {
+      let intersects = raycaster.intersectObject(obj)
+  
       if (intersects.length > 0) {
-        let vector = Array()
-        vector.push(camera.position.x - intersects[0].object.position.x)
-        vector.push(camera.position.y - intersects[0].object.position.y)
-        vector.push(camera.position.z - intersects[0].object.position.z)
-        let tempDistance = 0
-        vector.forEach(el => {
-          tempDistance += el*el
-        })
-        tempDistance = Math.sqrt(tempDistance) - intersects[0].object.geometry.boundingSphere.radius
-        if(tempDistance < distance || !distance){
-          distance = tempDistance
-          closest = objects[i]
-        }
+        console.log(obj)
+        notArrow = false
       }
     })
+
+    if(notArrow){
+      objects.forEach((obj, i) => {
+        obj.remove(xArrow)
+        obj.remove(yArrow)
+        obj.remove(zArrow)
+        let intersects = raycaster.intersectObject(obj)
+  
+        if (intersects.length > 0) {
+          let vector = Array()
+          vector.push(camera.position.x - intersects[0].object.position.x)
+          vector.push(camera.position.y - intersects[0].object.position.y)
+          vector.push(camera.position.z - intersects[0].object.position.z)
+          let tempDistance = 0
+          vector.forEach(el => {
+            tempDistance += el*el
+          })
+          tempDistance = Math.sqrt(tempDistance) - intersects[0].object.geometry.boundingSphere.radius
+          if(tempDistance < distance || !distance){
+            distance = tempDistance
+            closest = objects[i]
+          }
+        }
+      })  
+    }
+
     if(closest){
       chosen = closest
-      xArrow = new THREE.ArrowHelper(new THREE.Vector3(2, 0, 0).normalize(), new THREE.Vector3(0, 0, 0), closest.geometry.boundingSphere.radius * 1.2, "blue")
-      yArrow = new THREE.ArrowHelper(new THREE.Vector3(0, 2, 0).normalize(), new THREE.Vector3(0, 0, 0), closest.geometry.boundingSphere.radius * 1.2, "red")
-      zArrow = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 2).normalize(), new THREE.Vector3(0, 0, 0), closest.geometry.boundingSphere.radius * 1.2, "green")
-      closest.add(xArrow)
-      closest.add(yArrow)
-      closest.add(zArrow)
+
+      origin = new THREE.Vector3(0, 0, 0)
+
+      xVector = new THREE.Vector3(2, 0, 0).normalize()      
+      xArrow = new THREE.ArrowHelper(xVector, origin, closest.geometry.boundingSphere.radius * 1.2, "blue")
+      xArrow.name = "x"
+      xArrow.line.material.linewidth = 500;
+
+      yVector = new THREE.Vector3(0, 2, 0).normalize()
+      yArrow = new THREE.ArrowHelper(yVector, origin, closest.geometry.boundingSphere.radius * 1.2, "red")
+      yArrow.name = "y"
+
+      zVector = new THREE.Vector3(0, 0, 2).normalize()
+      zArrow = new THREE.ArrowHelper(zVector, origin, closest.geometry.boundingSphere.radius * 1.2, "green")
+      zArrow.name = "z"
+
+      arrows.length = 0
+      arrows.push(xArrow, yArrow, zArrow)
+      
+      arrows.forEach(obj => {
+        chosen.add(obj)
+      })
     }else{
       chosen = null
     }
